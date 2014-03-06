@@ -23,6 +23,7 @@ import re
 import string
 import thirdparty
 import vim
+import subprocess
 
 VIM_COMMAND_LOCALCOMPLETE = 'silent let s:__localcomplete_lookup_result = %s'
 VIM_COMMAND_BUFFERCOMPLETE = 'silent let s:__buffercomplete_lookup_result = %s'
@@ -359,3 +360,30 @@ def complete_all_buffer_matches():
             min_length_keyword_base)
 
     transmit_all_buffer_result_to_vim(found_matches)
+
+def generate_recent_git_lines():
+    commands = [
+            "git ls-files --others --exclude-standard | xargs -I % git diff --diff-filter=AM /dev/null % | grep '^\+'",
+            "git diff @'{30.minutes.ago}' --diff-filter=AM | grep '^\+'"]
+
+    run = lambda results, command: results + subprocess.check_output(command, shell=True).split()
+    return reduce(run, commands, [])
+
+def transmit_recent_git_result_to_vim(found_matches):
+    origin_note = vim.eval("g:localcomplete#OriginNoteAllBuffers")
+    vim.command(VIM_COMMAND_BUFFERCOMPLETE
+            % repr(produce_result_value(
+                    found_matches,
+                    origin_note)))
+
+def complete_recent_git_matches():
+    """
+    Return a completion result for a:keyword_base searched in all buffers
+    """
+    min_length_keyword_base = int(vim.eval(
+            "localcomplete#getAllBufferMinPrefixLength()"))
+
+    found_matches = find_matches_in_lines(generate_recent_git_lines(),
+            min_length_keyword_base)
+
+    transmit_recent_git_result_to_vim(found_matches)

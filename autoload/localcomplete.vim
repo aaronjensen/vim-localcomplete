@@ -310,6 +310,21 @@ function localcomplete#dictMatches(findstart, keyword_base)
     endif
 endfunction
 
+function localcomplete#recentGitMatches(findstart, keyword_base)
+    " Search all buffers for matches.  Results from the current buffer will
+    " come first.  The ignore-case and keyword-chars configuration from the
+    " top of this file will be respected.
+    if a:findstart
+        LCPython import localcomplete
+        LCPython localcomplete.findstart_local_matches()
+        return s:__localcomplete_lookup_result_findstart
+    else
+        LCPython import localcomplete
+        LCPython localcomplete.complete_recent_git_matches()
+        return s:__buffercomplete_lookup_result
+    endif
+endfunction
+
 " ----------- Python prep
 
 if has('python')
